@@ -85,9 +85,7 @@ HIST_RADIUS_M = args.cherenkov_histogram_radius
 assert HIST_RADIUS_M > 0
 
 XY_BIN_EDGES_M = np.linspace(
-    start=-HIST_RADIUS_M,
-    stop=HIST_RADIUS_M,
-    num=(2 * HIST_RADIUS_M) + 1
+    start=-HIST_RADIUS_M, stop=HIST_RADIUS_M, num=(HIST_RADIUS_M) + 1
 )
 
 RUN_ID = RANDOM_SEED
