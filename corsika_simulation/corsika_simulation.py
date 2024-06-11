@@ -48,6 +48,14 @@ parser.add_argument(
     required=False,
     default=6,
 )
+parser.add_argument(
+    "--cherenkov_histogram_radius",
+    metavar="RADIUS_M",
+    type=int,
+    help=("Radius of histogram to collect Cherenkov light. In m."),
+    required=False,
+    default=160,
+)
 args = parser.parse_args()
 
 RANDOM_SEED = args.random_seed
@@ -71,6 +79,15 @@ observation_levels_asl_m = np.geomspace(
     observation_level_hess_asl_m,
     observation_level_hess_asl_m + range_in_atmosphere_m,
     args.num_observation_levels,
+)
+
+HIST_RADIUS_M = args.cherenkov_histogram_radius
+assert HIST_RADIUS_M > 0
+
+XY_BIN_EDGES_M = np.linspace(
+    start=-HIST_RADIUS_M,
+    stop=HIST_RADIUS_M,
+    num=(2 * HIST_RADIUS_M) + 1
 )
 
 RUN_ID = RANDOM_SEED
@@ -195,9 +212,6 @@ def make_atmosphere_properties(altitude_asl_m):
     atm["unit_charge_energy_to_cherenkov_light_dEdZ_eV_per_m"] = dEdz_eV_per_m
 
     return atm
-
-
-XY_BIN_EDGES_M = np.linspace(-160, 160, 160 + 1)
 
 
 def histogram_cherenkov_bunches(cherenkov_bunches):
