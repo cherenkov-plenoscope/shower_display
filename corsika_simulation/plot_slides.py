@@ -31,11 +31,11 @@ with open(args.shower_path, "rt") as f:
     shower = json_numpy.loads(f.read())
 
 
-SLIDE_RADIUS_MM = 400
+SLIDE_RADIUS_MM = 250
 
-scale = 1000 / 400
+scale = 1000 / 1000
 
-fontsize = "10px"
+fontsize = "6px"
 linespacing = 15
 font_family = "Georgia, serif"
 particle_font_family = "Georgia, serif"
@@ -211,12 +211,13 @@ def add_plot_hess_array(ax, scale):
         ax=ax,
         xy=[0, 0],
         radius=scale * hess_ct5_radius,
-        fill=svgplt.color.css("red"),
+        stroke=svgplt.color.css("black"),
+        fill=None,
     )
     svgplt.ax_add_text(
         ax=ax,
         text=("H.E.S.S. CT-5"),
-        xy=[-0.5 * scale * hess_ct5_radius, -0.5 * linespacing],
+        xy=[-1.5 * scale * hess_ct5_radius, -2 * linespacing],
         font_size=fontsize,
         font_family=font_family,
     )
@@ -228,18 +229,52 @@ def add_plot_hess_array(ax, scale):
             ax=ax,
             xy=[hess_ct_x, hess_ct_y],
             radius=scale * hess_ct1to4_radius,
-            fill=svgplt.color.css("red"),
+            stroke=svgplt.color.css("black"),
+            fill=None,
         )
         svgplt.ax_add_text(
             ax=ax,
             text=("H.E.S.S. CT-{:d}".format(1 + ij)),
             xy=[
-                hess_ct_x - 0.5 * scale * hess_ct1to4_radius,
-                hess_ct_y - 0.5 * linespacing,
+                hess_ct_x - 1.5 * scale * hess_ct1to4_radius,
+                hess_ct_y - 1 * linespacing,
             ],
             font_size=fontsize,
             font_family=font_family,
         )
+
+
+def ax_add_cherenkov_angle(ax, max_cherenkov_cone_half_angle_rad):
+    cer_half_angle_rad = max_cherenkov_cone_half_angle_rad
+    cer_full_angle_deg = 2.0 * np.rad2deg(cer_half_angle_rad)
+    cer_length = 640
+    cer_start = [0, cer_length]
+    cer_stop_1 = [-np.tan(cer_half_angle_rad) * cer_length, 0]
+    cer_stop_2 = [+np.tan(cer_half_angle_rad) * cer_length, 0]
+    svgplt.ax_add_path(
+        ax=ax,
+        xy=[cer_start, cer_stop_1],
+        stroke=svgplt.color.css("black"),
+        stroke_opacity=0.5,
+    )
+    svgplt.ax_add_path(
+        ax=ax,
+        xy=[cer_start, cer_stop_2],
+        stroke=svgplt.color.css("black"),
+        stroke_opacity=0.5,
+    )
+    svgplt.ax_add_text(
+        ax=ax,
+        text=(
+            "Cherenkov cone full angle: "
+            + "{: 6.2f}".format(cer_full_angle_deg)
+            + svgplt.text.thinspace()
+            + svgplt.text.circ()
+        ),
+        xy=[-140, -1 * linespacing],
+        font_size=fontsize,
+        font_family=font_family,
+    )
 
 
 def flippy(mat):
@@ -281,23 +316,36 @@ def ax_add_symetry_grid(ax):
     )
 
 
+fig_hess = svgplt.Fig(cols=2*SLIDE_RADIUS_MM, rows=2*SLIDE_RADIUS_MM)
+ax_hess = svgplt.Ax(fig_hess)
+ax_hess["span"] = (0, 0, 1, 1)
+ax_hess["xlim"] = (-SLIDE_RADIUS_MM, SLIDE_RADIUS_MM)
+ax_hess["ylim"] = (-SLIDE_RADIUS_MM, SLIDE_RADIUS_MM)
+add_plot_hess_array(ax=ax_hess, scale=scale)
+svgplt.fig_write(
+    fig_hess, os.path.join(out_dir, "hess.svg")
+)
+
 for step in shower["steps"]:
     print("step", step["step"])
-    fig = svgplt.Fig(cols=800, rows=800)
-    ax = svgplt.Ax(fig)
-    ax["span"] = (0, 0, 1, 1)
-    ax["xlim"] = (-400, 400)
-    ax["ylim"] = (-400, 400)
+    fig_cherenkov = svgplt.Fig(cols=2*SLIDE_RADIUS_MM, rows=2*SLIDE_RADIUS_MM)
+    axc = svgplt.Ax(fig_cherenkov)
+    axc["span"] = (0, 0, 1, 1)
+    axc["xlim"] = (-SLIDE_RADIUS_MM, SLIDE_RADIUS_MM)
+    axc["ylim"] = (-SLIDE_RADIUS_MM, SLIDE_RADIUS_MM)
 
-    ax_text = svgplt.Ax(fig)
+    fig_particles = svgplt.Fig(cols=2*SLIDE_RADIUS_MM, rows=2*SLIDE_RADIUS_MM)
+    axp = svgplt.Ax(fig_particles)
+    axp["span"] = (0, 0, 1, 1)
+    axp["xlim"] = (-SLIDE_RADIUS_MM, SLIDE_RADIUS_MM)
+    axp["ylim"] = (-SLIDE_RADIUS_MM, SLIDE_RADIUS_MM)
+
+
+    fig_text = svgplt.Fig(cols=2*SLIDE_RADIUS_MM, rows=2*SLIDE_RADIUS_MM)
+    ax_text = svgplt.Ax(fig_text)
     ax_text["span"] = (0.05, 0.05, 0.2, 0.2)
     ax_text["xlim"] = (0, 160)
     ax_text["ylim"] = (0, 160)
-
-    ax_cerangle = svgplt.Ax(fig)
-    ax_cerangle["span"] = (0.9, 0.1, 0.1, 0.8)
-    ax_cerangle["xlim"] = (-40, 40)
-    ax_cerangle["ylim"] = (0, 640)
 
     cherenkov_bitmap = skimage_filters.gaussian(
         image=step["cherenkov"]["intensity_on_observation_level"],
@@ -306,7 +354,7 @@ for step in shower["steps"]:
 
     if cherenkov_mode == "bitmap":
         svgplt.ax_add_pcolormesh(
-            ax=ax,
+            ax=axc,
             z=flippy(cherenkov_bitmap),
             colormap=cer_colormap,
             x_bin_edges=shower["input"]["xy_bin_edges_m"] * scale,
@@ -326,7 +374,7 @@ for step in shower["steps"]:
             for contour_xy in cer_layers[ii]:
                 if len(contour_xy) > 0:
                     svgplt.ax_add_path(
-                        ax=ax,
+                        ax=axc,
                         xy=contour_xy,
                         fill=None,
                         # fill=svgplt.color.css("blue"),
@@ -337,13 +385,10 @@ for step in shower["steps"]:
 
     # ax_add_symetry_grid(ax=ax)
 
-    if step["step"] == 0:
-        add_plot_hess_array(ax=ax, scale=scale)
-
     if "electron" in step["particles"]:
         for particle in step["particles"]["electron"]:
             add_to_ax_particle(
-                ax=ax,
+                ax=axp,
                 scale=scale,
                 particle=particle,
                 text="e" + svgplt.text.superscript("-"),
@@ -355,7 +400,7 @@ for step in shower["steps"]:
     if "positron" in step["particles"]:
         for particle in step["particles"]["positron"]:
             add_to_ax_particle(
-                ax=ax,
+                ax=axp,
                 scale=scale,
                 particle=particle,
                 text="e" + svgplt.text.superscript("+"),
@@ -367,7 +412,7 @@ for step in shower["steps"]:
     if "gamma" in step["particles"]:
         for particle in step["particles"]["gamma"]:
             add_to_ax_particle(
-                ax=ax,
+                ax=axp,
                 scale=scale,
                 particle=particle,
                 text=svgplt.text.gamma(),
@@ -518,56 +563,48 @@ for step in shower["steps"]:
         font_family=font_family,
     )
 
-    # Cherenkov angle display
-    # -----------------------
-    cer_half_angle_rad = step["atmosphere"][
-        "max_cherenkov_cone_half_angle_rad"
-    ]
-    cer_full_angle_deg = 2.0 * np.rad2deg(cer_half_angle_rad)
-    cer_length = 640
-    cer_start = [0, cer_length]
-    cer_stop_1 = [-np.tan(cer_half_angle_rad) * cer_length, 0]
-    cer_stop_2 = [+np.tan(cer_half_angle_rad) * cer_length, 0]
-    svgplt.ax_add_path(
-        ax=ax_cerangle,
-        xy=[cer_start, cer_stop_1],
-        stroke=svgplt.color.css("black"),
-        stroke_opacity=0.5,
-    )
-    svgplt.ax_add_path(
-        ax=ax_cerangle,
-        xy=[cer_start, cer_stop_2],
-        stroke=svgplt.color.css("black"),
-        stroke_opacity=0.5,
-    )
-    svgplt.ax_add_text(
-        ax=ax_cerangle,
-        text=(
-            "Cherenkov cone full angle: "
-            + "{: 6.2f}".format(cer_full_angle_deg)
-            + svgplt.text.thinspace()
-            + svgplt.text.circ()
-        ),
-        xy=[-140, -1 * linespacing],
-        font_size=fontsize,
-        font_family=font_family,
-    )
-
     svgplt.fig_write(
-        fig, os.path.join(out_dir, "{:03d}.svg".format(step["step"]))
+        fig_cherenkov, os.path.join(out_dir, "{:03d}.cherenkov.svg".format(step["step"]))
+    )
+    svgplt.fig_write(
+        fig_particles, os.path.join(out_dir, "{:03d}.particles.svg".format(step["step"]))
+    )
+    svgplt.fig_write(
+        fig_text, os.path.join(out_dir, "{:03d}.text.svg".format(step["step"]))
     )
 
+css = ""
+css += ".parent {\n"
+css += "  position: relative;\n"
+css += "  top: 0;\n"
+css += "  left: 0;\n"
+css += "}\n"
+css += ".image1 {\n"
+css += "  position: relative;\n"
+css += "  top: 0px;\n"
+css += "  left: 0px;\n"
+css += "  border: 1px red solid;\n"
+css += "}\n"
+css += ".image2 {\n"
+css += "  position: absolute;\n"
+css += "  top: 0px;\n"
+css += "  left: 0px;\n"
+css += "  border: 1px green solid;\n"
+css += "}\n"
+
+with open(os.path.join(out_dir, "styles.css"), "wt") as f:
+    f.write(css)
 
 index_html = ""
 index_html += "<!DOCTYPE html>\n"
-
 index_html += '<html lang="en">\n'
 index_html += "  <head>\n"
 index_html += '    <meta charset="utf-8">\n'
 index_html += "    <title>Air shower display</title>\n"
-index_html += '    <link rel="stylesheet" href="style.css">\n'
+index_html += '    <link rel="stylesheet" href="styles.css">\n'
 index_html += "  </head>\n"
 index_html += "  <body>\n"
+index_html += "\n"
 index_html += "  <h1>Air shower display</h1>\n"
 for back in range(len(shower["steps"])):
     istep = len(shower["steps"]) - back - 1
@@ -577,11 +614,16 @@ for back in range(len(shower["steps"])):
         (step["observation_level_asl_m"] - 1.8e3) * scale * 1e-3,
         step["observation_level_asl_m"] * 1e-3,
     )
-    index_html += '      <img src="{:s}" alt="step" width="800px" height="800px">\n'.format(
-        "{:03d}.svg".format(step["step"])
-    )
+    index_html += '    <div class="parent">\n'
+    index_html += '      <img class="image1" src="{:03d}.cherenkov.svg"/>\n'.format(step["step"])
+    index_html += '      <img class="image2" src="{:03d}.particles.svg"/>\n'.format(step["step"])
+    index_html += '      <img class="image2" src="{:03d}.text.svg"/>\n'.format(step["step"])
+    if step["step"] == 0:
+        index_html += '        <img class="image2" src="hess.svg"/>\n'
+    index_html += '    </div>\n'
 index_html += "  </body>\n"
 index_html += "</html>\n"
 
 with open(os.path.join(out_dir, "index.html"), "wt") as f:
     f.write(index_html)
+

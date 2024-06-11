@@ -30,9 +30,8 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
+out_dir = args.out_dir
 
-
-out_dir = "2024-60-11_run"
 os.makedirs(out_dir, exist_ok=True)
 with open(os.path.join(out_dir, "config.json"), "wt") as f:
     f.write(
@@ -58,7 +57,7 @@ for random_seed in range(1, 7):
                 "--num_observation_levels",
                 str(15),
                 "--cherenkov_histogram_radius",
-                str(160),
+                str(250),
             ]
         )
 

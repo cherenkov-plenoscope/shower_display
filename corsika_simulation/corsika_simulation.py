@@ -134,6 +134,7 @@ for iobs in range(len(observation_levels_asl_m)):
         corsika_primary.particles.dat_to_tape(
             out_path + ".particles.dat", out_path + ".particles.tar"
         )
+        os.remove(out_path + ".particles.dat")
 
 
 ID_TO_NAME = {}
