@@ -31,6 +31,8 @@ with open(args.shower_path, "rt") as f:
     shower = json_numpy.loads(f.read())
 
 
+SLIDE_RADIUS_MM = 400
+
 scale = 1000 / 400
 
 fontsize = "10px"
@@ -54,9 +56,9 @@ cer_colormap = svgplt.color.Map(
     func=svgplt.scaling.power(0.333),
 )
 
-cer_film_intensity_num_bins = 64
+cer_film_intensity_num_bins = 32
 cer_film_intensity_bin_edges = np.geomspace(
-    cer_vmax * 0.015,
+    cer_vmax * 0.005,
     cer_vmax,
     cer_film_intensity_num_bins + 1,
 )
@@ -193,7 +195,7 @@ def add_to_ax_particle(ax, scale, particle, **kwargs):
                 )
             svgplt.ax_add_text(
                 ax=ax,
-                xy=[xe-ff*font_size_px, ye-ff*font_size_px],
+                xy=[xe - ff * font_size_px, ye - ff * font_size_px],
                 font_size="{:f}px".format(font_size_px),
                 **kwargs,
             )
