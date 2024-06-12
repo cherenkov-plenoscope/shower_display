@@ -2,6 +2,8 @@
 Create displays of atmospheric particle showers
 ###############################################
 
+|CcBy4|
+
 This is a collection of loose python scripts which are used to manufacture
 displays of atmospheric particle showers for public events.
 
@@ -31,3 +33,5 @@ shown using contour lines. Contour lines are bad for many reasons, but they
 are easy to engrave with a laser.
 
 .. |shower_slide| image:: https://github.com/cherenkov-plenoscope/shower_display/blob/main/readme/004.svg
+
+.. |CcBy4| image:: https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/
