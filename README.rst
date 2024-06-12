@@ -34,4 +34,4 @@ are easy to engrave with a laser.
 
 .. |shower_slide| image:: https://github.com/cherenkov-plenoscope/shower_display/blob/main/readme/004.svg
 
-.. |CcBy4| image:: https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/
+.. |CcBy4| image:: https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg
